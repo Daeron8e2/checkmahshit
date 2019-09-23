@@ -28,9 +28,9 @@ int anum = 0;
 
 int main()
 {
-/* Variable Declerations */
+/* datafile variable is used to open and reference the file */
     FILE *datafile;
-    char *filename = "groceries.dat";
+    char *filename = "groceries.dat"; // file saved in groceries.dat
     char ch;
     firstg = NULL;
     
@@ -39,7 +39,7 @@ int main()
     {
         firstg = (struct grocery *)malloc(sizeof(struct grocery));
         currentg = firstg;
-        while(1)
+        while(1)    // the while loop only ends when the last record is read from disk
         {
             newg = (struct grocery *)malloc(sizeof(struct grocery));
             fread(currentg, sizeof(struct grocery),1,datafile);
@@ -51,7 +51,10 @@ int main()
         fclose(datafile);
         anum = currentg->number;
     }
-    
+    /*
+     * List all the possible options for the user to 
+     * interact with the list
+     */
     do
     {
         puts("\nA - Add a new grocery");
@@ -66,7 +69,7 @@ int main()
         {
             case 'A':
                 puts("\nAdd grocery item\n");
-            clearInput();
+                clearInput();
                 addNewGrocery();
                 break;
             case 'L':
@@ -84,19 +87,21 @@ int main()
             case 'Q':
                 puts("Quit\n");
             default:
+                clearInput();
                 break;
         }
     } 
     while(ch != 'Q');
     
-/*
- * Save the records to disk
+/* 
+ * This section of code is used to store the linked
+ * list on disk, in the file groceries.dat 
  */
     currentg = firstg;
     if(currentg == NULL)
         return 0;   // no data to write
                     // End of program
-    datafile = fopen(filename,"w");
+    datafile = fopen(filename,"w"); // datafile variable used to open and reference the file
     if(datafile == NULL)
     {
         printf("Error writing to %s\n", filename);
@@ -123,6 +128,8 @@ void clearInput(void)
     while ((getchar())!='\n');
 }
 
+/* Function to add a new grocery */
+
 void addNewGrocery(void)
 {
     newg = (struct grocery *)malloc(sizeof(struct grocery));
@@ -148,7 +155,7 @@ void addNewGrocery(void)
     currentg->number = anum;
     
     printf("%27s: ","Enter the grocery's name");
-    scanf("%s",&currentg->name);
+    scanf("%s",currentg->name);
     
     printf("%27s: ","Enter the number of items");
     scanf("%d",&currentg->items);
@@ -161,16 +168,15 @@ void addNewGrocery(void)
     clearInput();
 }
 
+/* function to list all of the elements in the list */
 void listAll(void)
 {
     if(firstg==NULL)
         puts("There are no records to print!");
-    else
-    {
+    else{
 	printf("%6s %-15s %-15s %6s\n", "Gr#","Name","Amount","Price");
         currentg=firstg;
-        do
-        {
+        do{
             printf("%5d: %-15s %-15d $%.2f\n",
                 currentg->number,
                 currentg->name,
@@ -182,11 +188,14 @@ void listAll(void)
     clearInput();
 }
 
+/* delete any of the grocery items already on the list */
+
 void deleteGrocery(void)
 {
     int record;
     struct grocery *previousg;
 
+/* if there are no records, then nothing is done */
     if(firstg==NULL)
     {
         puts("There are no groceries to delete!");
@@ -197,7 +206,8 @@ void deleteGrocery(void)
     printf("Enter grocery number to delete: ");
     scanf("%d",&record);
 
-    currentg = firstg;
+    currentg = firstg; /* points to start of list */
+    /* while loop is used to scan through list until NULL at the end */
     while(currentg != NULL)
     {
         if(currentg->number == record)
@@ -231,10 +241,14 @@ void modifyGrocery(void)
         return;
     }
     
-    listAll();		/* show all records first */
+    listAll();		/* show all records */
     printf("\nEnter grocery number to modify or change: ");
     scanf("%d",&record);
 
+/* 
+ * While loop to cycle through each element in the 
+ * structure and replace them with new data
+ */
     currentg = firstg;
     while(currentg != NULL)
     {
@@ -242,14 +256,15 @@ void modifyGrocery(void)
         {
             printf("Grocery #%d:\n",currentg->number);
             printf("Current Name: %s\n",currentg->name);
-            if(prompt())
-                scanf("%s",&currentg->name);
+            prompt();
+                scanf("%s",currentg->name);
             printf("Items to purchase: %d\n",currentg->items);
-            if(prompt())
+            prompt();
                 scanf("%d",&currentg->items);
-            printf("Amount per item %8.2f\n",currentg->price);
-            if(prompt())
+            printf("Amount per item: %8.2f\n",currentg->price);
+            prompt();
                 scanf("%f",&currentg->price);
+            clearInput();
             return;
         }
         else
@@ -258,6 +273,7 @@ void modifyGrocery(void)
         }
     }
     printf("Grocery %d was not found!\n",record);
+    clearInput();
 }
 
 int prompt(void)
