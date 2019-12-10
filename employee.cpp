@@ -3,8 +3,12 @@
 
 using std::string;
 
-class employee
+class Employee
 {
+    private:
+    string username, password, email;
+    
+    public:
     int Login(bool logincounter)
     {
         
@@ -14,8 +18,9 @@ class employee
 int main()
 {
 	char choice;
-    bool userLogin;
-    Login(userLogin);
+   	bool userLogin;
+    Employee employees;
+   	employees.Login(userLogin);
 	do
 	{
         if(userLogin = 1)
