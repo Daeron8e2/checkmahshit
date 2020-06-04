@@ -50,8 +50,9 @@ void listQueue(void);
 void deallocateQueue(void); // This just removes the processes in the queue from actual memory
 void calculateMetrics(); // Function to calculate the metrics for later analysis
 void deallocate_from_memory(struct queue *queue_process, int processID);
+void CPU(struct queue *queue_process, int time);
 // Different scheduling algorithms that can be used by scheduler
-void first_in_first_out(); void calculate_fifo(int elapsed_time);
+void first_in_first_out(); void calculate_fifo(void);
 void shortest_job_first();
 void round_robin();
 
@@ -96,7 +97,7 @@ int main() {
 void first_in_first_out(){
 	// First start with variables
 	int numOfProcesses = 0, newProcessState = 0;
-	int timeslice;
+	int timeslice = 0;
 
 	// Count how many processes
 	while(currentq->next != NULL){
@@ -104,28 +105,58 @@ void first_in_first_out(){
 		currentq = currentq->next;
 	}
 
+	calculate_fifo();
+
+	currentq = firstq;
 	// Run operations for the amount processes we have
 	while(numOfProcesses > 0){ // We minus one every time a process finished execution
 		while(currentq->next != NULL){
+			// Check to see if 
 			if(currentq->startTime <= timeslice){
 				if(memory_fill >= currentq->size + memory_fill){ // If process fits into main memory
 					add_to_memory(currentq, 1); // Set to ready state
-					numOfProcesses--;
 				}
 				else if(memory_fill <= currentq->size + memory_fill){
 					add_to_memory(currentq, 4); // Set to suspend in the virtual memory
-					numOfProcesses--;
 				}
 			}
 		}
-		// Here the process calculates the timeslice, and does the necessary operations in memory
-		CPU();
+		CPU(timeslice);
+		timeslice++;
 	}
 }
 
+void calculate_fifo(void){
+    int current_time = 0;
+	while(currentq->next != NULL) {
+    	//if arrival is < current time, wait time = current time - arrival
+        if(currentq->startTime < current_time)
+            currentq->waitTime = current_time - currentq->startTime;
+
+    	//if arrival is >= current time, wait time = 0;
+        else if(currentq->startTime >= current_time)
+            currentq->waitTime = 0;
+    	//current time = current time + wait time + time to completion
+        current_time = current_time + currentq->executionTime;
+    	//turnaround time = wait time + time to completion
+        currentq->turnAround = currentq->waitTime + currentq->executionTime;
+    }
+}
+
 /* This function will handle the cpu allocation and checking of time */
-void CPU(){
-	
+void CPU(int time){
+	int runState = 2, readyState = 1;
+	if(firstp == NULL){
+		printf("No processes to execute in the CPU");
+		return;
+	}
+	if(firstp->pState != runState){
+		firstp->pState = runState; // Set the first process to be executing
+		printf("Process %d is now scheduled to execute in the CPU.", firstp->pID);
+	}else if(firstp->startTime + firstp->executionTime >= time){
+		printf("Process %d has now finished running and will now terminate.", firstp->pID);
+
+	}
 }
 
 /* add a queue item to the memory */
@@ -164,7 +195,7 @@ void deallocate_from_memory(struct queue *queue_process, int processID)
 {
     struct memory *previousp;
 
-/* if there are no records, then nothing is done */
+	/* if there are no records, then nothing is done */
     if(firstp==NULL)
     {
         puts("There are no processes in memory.\n");
