@@ -4,6 +4,8 @@
 #define ROWS 7
 #define COLOUMNS 6
 #define MEMORY_SIZE 20
+#define SLEEP 0
+#define END 1
 
 // Linked list of all processes to be run
 struct queue{
@@ -17,8 +19,6 @@ struct queue{
 	// Metrics used for performance comparisons
 	int waitTime;
 	int turnAround;
-	
-	int waitTime;
     struct queue *next;
 }; 
 struct queue *firstq, *currentq, *newq;
@@ -35,7 +35,6 @@ struct memory{
 	// Metrics used for performance comparisons
 	int waitTime;
 	int turnAround;
-
     struct memory *next;
 }; struct memory *firstp, *currentp, *newp;
 
@@ -50,7 +49,7 @@ void listQueue(void);
 void deallocateQueue(void); // This just removes the processes in the queue from actual memory
 void calculateMetrics(); // Function to calculate the metrics for later analysis
 void deallocate_from_memory(struct queue *queue_process, int processID);
-void CPU(struct queue *queue_process, int time);
+void CPU(int time);
 // Different scheduling algorithms that can be used by scheduler
 void first_in_first_out(); void calculate_fifo(void);
 void shortest_job_first();
@@ -90,6 +89,7 @@ int main() {
 	// round_robin();
 
 	deallocateQueue(); // Deallocate the queue from memory
+	puts("Exiting");
 	return 0;
 }
 
@@ -126,36 +126,75 @@ void first_in_first_out(){
 	}
 }
 
+/* To calculate the metrics for the fifo algorithm */
 void calculate_fifo(void){
     int current_time = 0;
 	while(currentq->next != NULL) {
     	//if arrival is < current time, wait time = current time - arrival
         if(currentq->startTime < current_time)
             currentq->waitTime = current_time - currentq->startTime;
-
     	//if arrival is >= current time, wait time = 0;
         else if(currentq->startTime >= current_time)
             currentq->waitTime = 0;
-    	//current time = current time + wait time + time to completion
-        current_time = current_time + currentq->executionTime;
-    	//turnaround time = wait time + time to completion
-        currentq->turnAround = currentq->waitTime + currentq->executionTime;
+    	
+        current_time = current_time + currentq->executionTime; //current time = current time + wait time + time to completion
+        currentq->turnAround = currentq->waitTime + currentq->executionTime; //turnaround time = wait time + time to completion
     }
+
+
 }
 
 /* This function will handle the cpu allocation and checking of time */
 void CPU(int time){
 	int runState = 2, readyState = 1;
 	if(firstp == NULL){
-		printf("No processes to execute in the CPU");
+		puts("No processes to execute in the CPU");
 		return;
 	}
+
 	if(firstp->pState != runState){
 		firstp->pState = runState; // Set the first process to be executing
 		printf("Process %d is now scheduled to execute in the CPU.", firstp->pID);
-	}else if(firstp->startTime + firstp->executionTime >= time){
+	}else if(firstp->startTime + firstp->executionTime >= time && firstp->pState == runState){
 		printf("Process %d has now finished running and will now terminate.", firstp->pID);
+		terminate();
+	}
+}
 
+/* The function that removes the processes one at a time */
+void terminate(void) {
+	if(firstp==NULL)
+        return;
+
+	currentp = firstp; // points to start of list
+
+	while(currentp != NULL){
+		if(currentp->pState == 2){
+			if(currentp->endState == SLEEP){
+				firstp = currentp->next;
+				sleepFunction(currentp);
+				printf("The process %d is now in secondary memory waiting for its next execution.", currentp->pID);
+				free(currentp);
+			}else if(currentp->endState == END){
+				firstp = currentp->next;
+				printf("Process %d has now been terminated.", currentp->pID);
+				free(currentp);
+			}
+		}
+	}
+}
+
+/* Handles those functions that need to sleep */
+void sleepFunction(struct queue *process){
+	currentq = firstq; // Start from the top
+	while(currentq->next != NULL){
+		if(process->pID == currentq->pID){
+			currentq->turnAround = process->turnAround;
+			currentq->waitTime = process->waitTime;
+			currentq->pState = 5; // Suspend blocked state
+			return;
+		}
+		currentq = currentq->next;
 	}
 }
 
@@ -188,52 +227,6 @@ void add_to_memory(struct queue *queue_process, int state){
 	}else if(currentp->pState == 4){
 		printf("Process number %d has been scheduled to \"Secondary Memory\". \nIt will be scheduled to main memory when applicable.\n", currentp->pID);
 	}
-}
-
-/* delete any of the grocery items already on the list */
-void deallocate_from_memory(struct queue *queue_process, int processID)
-{
-    struct memory *previousp;
-
-	/* if there are no records, then nothing is done */
-    if(firstp==NULL)
-    {
-        puts("There are no processes in memory.\n");
-        return;
-    }
-    currentp = firstp; // points to start of list
-    /* while loop is used to scan through memory until the last process */
-    while(currentp != NULL)
-    {
-        if(currentp == processID)
-        {
-			if(currentp->endState == 0){
-				if(currentp == firstp){	/* special condition */
-					firstp=currentp->next;
-				}else{
-					previousp->next = currentp->next;
-				}
-				free(currentp);
-				printf("Process %d was save to secondary memory until next run.\n", processID);
-            	return;
-			}else if(currentp->endState){
-				if(currentp == firstp){	/* special condition */
-					firstp=currentp->next;
-				}else{
-					previousp->next = currentp->next;
-				}
-				free(currentp);
-				printf("Process %d was save to secondary memory until next run.\n", processID);
-            	return;
-			}
-        }else
-        {
-            previousp = currentp;
-            currentp = currentp->next;
-        }
-    }
-    printf("An error occurred with finding process ID %d\n", processID);
-    puts("Nothing deallocated.");
 }
 
 /* This function creates the linked list of structures to be run */
@@ -292,7 +285,7 @@ void clearMemory()
 {
 	do{
 		if(firstp==NULL){
-			printf("There is no queue to deallocate");
+			puts("There is no queue to deallocate");
 			break;
 		}
 		else
@@ -314,7 +307,7 @@ void deallocateQueue(void)
 {
 	do{
 		if(firstq==NULL){
-			printf("There is no queue to deallocate");
+			puts("There is no queue to deallocate");
 			break;
 		}
 		else
