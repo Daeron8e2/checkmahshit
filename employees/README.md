@@ -1,20 +1,23 @@
-For this assignment, you will write a program that keeps track of employees at a company. 
-  Three types of users can access the system: Human Resources, Management, and General Employees. 
-  A Human Resources user will be able to add, view, search, modify, and delete employees. 
-  A Management user can only search and view employees. A General Employee user 
-  can only view his or her own file. Employee files will have at least the 
-  employee's name and numeric user id.
+## Assignment Prompt
+
+### For this assignment, you will write a program that keeps track of employees at a company. 
+    Three types of users can access the system: Human Resources, Management, and General Employees. 
+        A Human Resources user will be able to add, view, search, modify, and delete employees. 
+        A Management user can only search and view employees. 
+        A General Employee user can only view his or her own file. 
+
+        Employee files will have at least the employee's name and numeric user id.
 
     Your program will implement a management information system.
-    The minimum requirements of the system are: implement a base employee class 
-    that will be defined for each employee type or function, implement a log-in feature, 
-    and the login will determine what functions are accessible to the employee.
+    The minimum requirements of the system are: 
+    implement a base employee class that will be defined for each employee type or function, implement a log-in feature, and the login will determine what functions are accessible to the employee.
+    
     The program will be interactive. At a minimum, a log-in screen and menu screen will be used. 
     Input should be validated for correct login credentials.
     Functions and classes should be used where appropriate to produce readable, reusable code. 
     Library functions and user-defined functions should be used where appropriate. 
 
-Some simple rules to follow to make your code more readable:
+#### Some simple rules to follow to make your code more readable:
 
     Use indentation or spacing consistently. (e.g., every line in a loop is indented to align)
     Add whitespace to help separate parts of the code. (e.g., empty line after a loop, space after a semicolon in a loop, etc.)
